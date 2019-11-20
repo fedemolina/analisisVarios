@@ -41,21 +41,19 @@ shinyServer(function(input, output) {
             )
     })
     
-    output$kernel <- renderPlotly({
         # Estimación de kernel
-        output$kernel <- renderPlotly({
-        
-            (ggplot(dt, aes_string(input$covariable1)) +
-                    stat_density(aes_string(fill = input$covariable3), alpha = 0.3, na.rm = FALSE, 
-                                 position = "identity", color = "black", kernel = "epanechnikov") +
-                    labs(title = paste("Estimación de kernel por", input$covariable3),
-                         y = "Densidad",
-                         x = input$covariable3) 
-                    # geom_vline(xintercept = intercepto,
-                    #            linetype = "dotted", color = "red", size = 0.5)
-            ) %>%
-                ggplotly(.)
-        })
+    output$kernel <- renderPlotly({
+    
+        (ggplot(dt, aes_string(input$covariable1)) +
+                stat_density(aes_string(fill = input$covariable3), alpha = 0.3, na.rm = FALSE, 
+                             position = "identity", color = "black", kernel = "epanechnikov") +
+                labs(title = paste("Estimación de kernel por", input$covariable3),
+                     y = "Densidad",
+                     x = input$covariable3) 
+                # geom_vline(xintercept = intercepto,
+                #            linetype = "dotted", color = "red", size = 0.5)
+        ) %>%
+            ggplotly(.)
     })
     
     output$scatter <- renderPlot({
@@ -71,22 +69,26 @@ shinyServer(function(input, output) {
         
     })
     
-    output$dispersion <- renderPlotly({
-        # top <- dt[, quantile(get(input$covariable1), probs = 0.99)]
-        # filtered_wage <- filter(df, Wage > top_1_percent_wage)
-        # 
-        # g_value <- ggplot(filtered_wage, aes(Wage))
-        # g_value + 
-        #     geom_histogram(aes(fill=..count..)) + 
-        #     ggtitle("Distribution of top 1% value")
+    output$distribucion <- renderPlotly({
+
         (dt[get(input$covariable1) > quantile(get(input$covariable1), 
-                                              probs = 1-as.numeric(input$top_x_dist)/100, na.rm = TRUE), ] %>% 
+                                              probs = 1 - as.numeric(input$top_x_dist)/100, na.rm = TRUE), ] %>% 
            ggplot(., aes_string((input$covariable1))) +
                geom_histogram(aes(fill =..count..)) +
                theme_ipsum() +
-               labs(title = "probando")) %>% 
+               labs(title = paste0("Distribución del ", input$top_x_dist, "% ","de ", input$covariable1))) %>% 
                ggplotly(.)
            
+    })
+    
+    # Matriz de correlación
+    output$correlacion <- renderPlot({
+        cols_numeric = names(dt)[dt[, sapply(.SD, is.numeric)]]
+        dt[, 
+           corrplot::corrplot(corr = cor(.SD, use = "complete.obs"), type = "lower", 
+                              diag = FALSE, order = "hclust", addrect = 4, tl.col = "black",
+                              tl.srt = 45), 
+           .SDcols = cols_numeric]    
     })
     
 
@@ -102,7 +104,7 @@ shinyServer(function(input, output) {
                  theme_ipsum() +
                  scale_color_viridis(discrete = FALSE) +
                  labs(x = "Clubes", y = input$covariable1,
-                      title = paste("Top", input$top_n, "clubes más valiosos \n", "según", input$covariable1))
+                      title = paste("Top", input$top_n, "clubes más valiosos", "según", input$covariable1))
               ) %>% ggplotly(.)
              ]    
     })
@@ -112,20 +114,21 @@ shinyServer(function(input, output) {
     #  QUEDE ACÁ
 # Jugadores más valiosos por posición
     output$top_n_jugadores <- renderPlotly({
-        setorder(dt, -"wage_million" )
-        dt[, .SD[1:10], by = position_summary
-           ][, .(get("wage_million"), get("position_summary"), get("name"))
-             ][(ggplot(.SD, aes(x = reorder(name, wage_million), y = wage_million)) +
-                    geom_bar(stat = "identity", aes_string(fill = input$covariable1)) +
-                    coord_flip() +
-                    facet_wrap(as.formula(paste("~", input$covariable3))) +
-                    theme_ipsum() +
-                    scale_color_viridis(discrete = FALSE) +
-                    labs(x = "Clubes", y = input$covariable1,
-                         title = paste("Top", input$top_n, "clubes más valiosos \n", "según", input$covariable1))
-             ) %>% ggplotly(.)]
+        # setorder(dt, -"wage_million" )
+        # dt[, .SD[1:10], by = position_summary
+        #    ][, .(get("wage_million"), get("position_summary"), get("name"))
+        #      ][,(ggplot(.SD, aes(x = reorder(V3, V1), y = V1)) +
+        #             geom_bar(stat = "identity", aes_string(fill = V1)) +
+        #             coord_flip() +
+        #             # facet_wrap(as.formula(paste("~", "position_summary"))) +
+        #             facet_wrap(. ~ V2) +
+        #             theme_ipsum() +
+        #             scale_color_viridis(discrete = FALSE) +
+        #             labs(x = "Clubes", y = "input$covariable1",
+        #                  title = paste("Top", "input$top_n", "clubes más valiosos \n", "según", "input$covariable1)"))
+        #      ) %>% ggplotly(.)]
         
-           (ggplot(.SD, aes(x = reorder(name, wage_million), y = wage_million)) +
+           dt[,(ggplot(.SD, aes(x = reorder(name, wage_million), y = wage_million)) +
                   geom_bar(stat = "identity", aes_string(fill = input$covariable1)) +
                   coord_flip() +
                   facet_wrap(as.formula(paste("~", input$covariable3))) +
@@ -136,5 +139,8 @@ shinyServer(function(input, output) {
         ) %>% ggplotly(.)]
         
     })
+    
+    
+    
     
 })

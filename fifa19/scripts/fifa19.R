@@ -189,5 +189,6 @@ dt[, position_summary2 := "no_detectado"
 
 dt[, table(position_summary)]
 dt[, table(position_summary2)]
+dt[, gdp := NULL]
 
 saveRDS(dt, here::here("fifa19", "data", "fifa.rds"), compress = FALSE)

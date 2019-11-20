@@ -21,34 +21,37 @@ shinyUI(
                          #    "financiado por",
                          #    img(src = "ANII.png", height = "30px")),
                          
-                         conditionalPanel("(input.navbarPage == 'general'",
+                         conditionalPanel(condition = "input.navbarPage == 'general'",
                                           selectInput("covariable1",
                                                       "Elegir covariable", 
                                                       choices = names(dt),
                                                       selected = "value_million"
                                           )                 
                          ),
-                         conditionalPanel("input.navbarPage == 'general' && input.tabsetGeneral !=='distribucion'",
+                         conditionalPanel(condition = "input.navbarPage == 'general' &&
+                                          input.tabsetGeneral !== 'distribucion' &&
+                                          input.tabsetGeneral !== 'mapa'",
                                           selectInput("covariable2",
                                                       "Elegir covariable", 
                                                       choices = names(dt),
                                                       selected = "wage_million"
                                           )                 
                          ),
-                         conditionalPanel(condition = "input.navbarPage == 'general'",
+                         conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral !== 'mapa' && 
+                                          input.tabsetGeneral !== 'distribucion'",
                                           selectInput(inputId = "covariable3",
                                                       label = "covariable3",
                                                       choices = c("position_summary", "position_summary2", "preferred_foot"),
                                                       selected = "position_summary")
                          ),
-                         conditionalPanel(condition = "input.navbarPage == 'general'",
+                         conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral == 'mapa'",
                                           selectInput("func",
                                                       "función", 
                                                       choices = c("sum", "mean", "max", "min", "sd"),
                                                       selected = "mean"
                                           )                 
                         ),
-                        conditionalPanel(condition = "input.navbarPage == 'general'",
+                        conditionalPanel(condition = "input.navbarPage == 'clubes'",
                                          textInput("top_n",
                                                      "top_n", 
                                                      value = "10"
@@ -114,7 +117,14 @@ shinyUI(
                                 title = "Distribución",
                                 value = "distribucion",
                                 fluidRow(
-                                    column(12, plotlyOutput(outputId = "dispersion", width = "auto", height = "auto"))
+                                    column(12, plotlyOutput(outputId = "distribucion", width = "auto", height = "auto"))
+                                )
+                            ),
+                            tabPanel(
+                                title = "Correlación",
+                                value = "correlacion",
+                                fluidRow(
+                                    column(12, plotOutput(outputId = "correlacion", width = "1000px", height = "1000px"))
                                 )
                             )
                         )
