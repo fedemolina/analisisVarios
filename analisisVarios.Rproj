@@ -6,17 +6,10 @@ AlwaysSaveHistory: Default
 
 EnableCodeIndexing: Yes
 UseSpacesForTab: Yes
-<<<<<<< HEAD
 NumSpacesForTab: 4
-=======
-NumSpacesForTab: 2
->>>>>>> 4aeb2401a31306e7f002d432480242dd9cab4e3b
 Encoding: UTF-8
 
 RnwWeave: Sweave
 LaTeX: pdfLaTeX
-<<<<<<< HEAD
 
 AutoAppendNewline: Yes
-=======
->>>>>>> 4aeb2401a31306e7f002d432480242dd9cab4e3b
