@@ -1,0 +1,56 @@
+---
+title: "Presentación Seminario del deporte"
+subtitle: "Instituto de Estadística \n FCEA \n Fifa19"
+author: 
+    - Federico Molina
+date: "11/20/2019"
+lang: spa
+output: 
+    revealjs::revealjs_presentation:
+        transition: fade
+        background_transition: fade
+        theme: black
+        highlight: tango
+        center: true
+        duration: 45
+        slide_level: 2
+        self_contained: false
+        reveal_plugins: ["chalkboard", "notes", "search", "zoom"]
+        reveal_options:
+            slidenumber: true
+            previewLinks: true
+            chalkboard:
+                theme: whiteboard
+                toggleNotesButton: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Motivación
+
+## Datos
+
+- Base de datos de [Sofifa](https://sofifa.com)
+- Scraping y publicación enn [kaggle](www.kaggle.com)
+- 88 variables
+- 73 variables númericas
+
+
+## Preguntas
+
+- ¿Dadas las características de los jugadores podemos inferir la posición?
+- ¿Dada la posición podemos inferir las características?
+- ¿Reducción de dimensiones?
+- ¿Predicción del precio/salario del jugador?
+
+
+
+# Análisis Exploratorio
+
+## Aplicación 
+
+- Aplicación web de Shiny
+
+# Fin
