@@ -28,3 +28,4 @@ sapply(paquetes, require, character.only = TRUE)
 
 # Datos
 dt <- readRDS(here::here("fifa19", "data", "fifa.rds"))
+cols_numeric = names(dt)[dt[, sapply(.SD, is.numeric)]]

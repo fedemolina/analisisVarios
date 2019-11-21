@@ -2,9 +2,9 @@
 shinyUI(
     
     fluidPage(
-        HTML('<style type="text/css">
-         .well { background-color: #ffffff;}
-        </style>'), 
+        # HTML('<style type="text/css">
+        #  .well { background-color: #ffffff;}
+        # </style>'), 
         
         # Sidebar with a slider input for number of bins
         sidebarLayout(
@@ -21,28 +21,34 @@ shinyUI(
                          #    "financiado por",
                          #    img(src = "ANII.png", height = "30px")),
                          
-                         conditionalPanel(condition = "input.navbarPage == 'general'",
+                         conditionalPanel(condition = "(input.navbarPage == 'general' && 
+                                          input.tabsetGeneral !== 'correlacion' &&
+                                          input.tabsetGeneral !== 'componentes') || input.tabsetClubes == 'extra' || input.tabsetClubes == 'ranking'",
                                           selectInput("covariable1",
                                                       "Elegir covariable", 
-                                                      choices = names(dt),
+                                                      choices = cols_numeric,
                                                       selected = "value_million"
                                           )                 
                          ),
-                         conditionalPanel(condition = "input.navbarPage == 'general' &&
-                                          input.tabsetGeneral !== 'distribucion' &&
-                                          input.tabsetGeneral !== 'mapa'",
+                         conditionalPanel(condition = "(input.navbarPage == 'general' &&
+                                          input.tabsetGeneral == 'dispersion') || input.tabsetGeneral == 'dispersion3D'",
                                           selectInput("covariable2",
                                                       "Elegir covariable", 
-                                                      choices = names(dt),
+                                                      choices = cols_numeric,
                                                       selected = "wage_million"
                                           )                 
                          ),
-                         conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral !== 'mapa' && 
-                                          input.tabsetGeneral !== 'distribucion'",
+                         conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral == 'dispersion'",
                                           selectInput(inputId = "covariable3",
                                                       label = "covariable3",
                                                       choices = c("position_summary", "position_summary2", "preferred_foot"),
                                                       selected = "position_summary")
+                         ),
+                         conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral == 'dispersion3D'",
+                                          selectInput(inputId = "covariable4",
+                                                      label = "eje Z",
+                                                      choices = cols_numeric,
+                                                      selected = "release_clause_million")
                          ),
                          conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral == 'mapa'",
                                           selectInput("func",
@@ -62,7 +68,11 @@ shinyUI(
                                                    inputId = "top_x_dist", 
                                                    value = "1"
                                          )                 
-                        )
+                        ),
+                        conditionalPanel(condition = "input.navbarPage == 'general' && input.tabsetGeneral == 'componentes'",
+                                         textInput(label = "Elegir componentes",
+                                                   inputId = "n_acp", 
+                                                   value = 2))
             ),
             
             # Show a plot of the generated distribution
@@ -102,7 +112,7 @@ shinyUI(
                                 title = "Mapa",
                                 value = 'mapa',
                                 fluidRow(
-                                    column(12, plotlyOutput(outputId = "mapa", height = "auto", width = "auto"))#,
+                                    column(12, plotlyOutput(outputId = "mapa", height = "1000px", width = "auto"))#,
                                     # column(12, plotlyOutput(outputId = "kernel", width = "auto", height = "auto"))
                                 )
                             ),
@@ -112,6 +122,13 @@ shinyUI(
                                 fluidRow(
                                     column(12, plotOutput(outputId = "scatter"))
                                 )
+                            ),
+                            tabPanel(
+                                title = "Dispersion3D",
+                                value = "dispersion3D",
+                                # fluidRow(
+                                    column(12, plotlyOutput(outputId = "scatter3D", width = "800px", height = "800px"))
+                                # )
                             ),
                             tabPanel(
                                 title = "Distribución",
@@ -126,6 +143,14 @@ shinyUI(
                                 fluidRow(
                                     column(12, plotOutput(outputId = "correlacion", width = "1000px", height = "1000px"))
                                 )
+                            ),
+                            tabPanel(
+                                title = "Componentes",
+                                value = "componentes",
+                                fluidRow(
+                                    column(12, plotlyOutput(outputId = "pca", width = "auto", height = "auto")),
+                                    column(12, DT::dataTableOutput(outputId = "tablePca"))
+                                )
                             )
                         )
                     ),
@@ -137,7 +162,7 @@ shinyUI(
                             type = "pills",
                             id = "tabsetLigas",
                             tabPanel(
-                                title = "departamento",
+                                title = "Etapa1",
                                 value = "dpto1",
                                 fluidRow(
                                     column(12, plotlyOutput(outputId = "densidadDpto", width = "auto", height = "auto")),
@@ -145,7 +170,7 @@ shinyUI(
                                 )
                             ),
                             tabPanel(
-                                title = "departamento2",
+                                title = "Etapa2",
                                 value = 'dpto2',
                                 fluidRow(
                                     # column(12, plotOutput(outputId = "facetDpto"))
@@ -158,7 +183,7 @@ shinyUI(
                         value = "clubes",
                         tabsetPanel(
                             type = "pills",
-                            id = "tabsetEscuela",
+                            id = "tabsetClubes",
                             tabPanel(
                                 title = "Ranking",
                                 value = "ranking",
@@ -170,7 +195,7 @@ shinyUI(
                                 title = "extra",
                                 value = "extra",
                                 fluidRow(
-                                    # column(12, plotOutput(outputId = "facetDpto"))
+                                    column(12, plotlyOutput(outputId = "distribucion_clubes"))
                                 )    
                             )
                         )

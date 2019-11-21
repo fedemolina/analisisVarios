@@ -69,6 +69,59 @@ shinyServer(function(input, output) {
         
     })
     
+    output$scatter3D <- renderPlotly({
+        plot_ly(data = dt) %>%
+            add_trace(
+                x =~ get(input$covariable1), 
+                y =~ get(input$covariable2), 
+                z =~ get(input$covariable4), 
+                name = "z", 
+                type = "scatter3d", alpha = 0.3, 
+                color = I("blue")
+            ) %>% 
+            layout(
+                scene = list(
+                    aspectratio = list(
+                        x = 1,
+                        y = 1,
+                        z = 1
+                    ),
+                    camera = list(
+                        center = list(
+                            x = 0,
+                            y = 0,
+                            z = 0
+                        ),
+                        eye = list(
+                            x = 1.96903462608,
+                            y = -1.09022831971,
+                            z = 0.405345349304
+                        ),
+                        up = list(
+                            x = 0,
+                            y = 0,
+                            z = 1
+                        )
+                    ),
+                    dragmode = "turntable",
+                    xaxis = list(
+                        title = input$covariable1,
+                        type = ""
+                    ),
+                    yaxis = list(
+                        title = input$covariable2,
+                        type = ""
+                    ),
+                    zaxis = list(
+                        title = input$covariable4,
+                        type = ""
+                    )
+                ),
+                xaxis = list(title = "x"),
+                yaxis = list(title = "y")
+            )
+    })
+    
     output$distribucion <- renderPlotly({
 
         (dt[get(input$covariable1) > quantile(get(input$covariable1), 
@@ -96,7 +149,7 @@ shinyServer(function(input, output) {
 
 # Ranking de clubes
     output$top_n_clubes <- renderPlotly({
-        dt[, .(valor = sum(get(input$covariable1))), by = (club = factor(club))
+        dt[, .(valor = mean(get(input$covariable1))), by = (club = factor(club))
            ][1:as.integer(input$top_n), 
              (ggplot(data = .SD, aes(x = reorder(club, valor), y = valor)) +
                  geom_bar(stat = "identity", aes(fill = valor)) +
@@ -108,6 +161,52 @@ shinyServer(function(input, output) {
               ) %>% ggplotly(.)
              ]    
     })
+    
+    # Distribución top clubes
+#     sum(get(input$covariable1)))
+# factor(club)
+#     output$distribucion_top_clubes <- renderPlotly({
+#         dt[, .(valor = sum(wage_million)), by = (club = factor(club))
+#            ][1:as.integer(input$top_n), 
+#              (ggplot(data = .SD, aes(x = reorder(club, valor), y = valor)) +
+#                   geom_violin(trim = F) +
+#                   geom_boxplot(width = 0.1) +
+#                   # theme_ipsum() +
+#                   # scale_color_viridis(discrete = FALSE) +
+#                   labs(x = "Clubes", y = input$covariable1,
+#                        title = paste("Top", input$top_n, "clubes más valiosos", "según", input$covariable1))
+#              ) %>% ggplotly(.)
+#              ]    
+#     })
+    
+    output$distribucion_clubes <- renderPlotly({
+        most_value_clubs <- dt %>% 
+            group_by(club) %>% 
+            summarise(club.squad.value = round(sum(wage_million))) %>% 
+            arrange(-club.squad.value) %>% 
+            head(n = input$top_n)
+        
+        player_list <- list()
+        
+        for ( i in 1:NROW(most_value_clubs)) {
+            temp_data <- dt %>% 
+                filter(club == most_value_clubs[[1]][i])
+            
+            player_list[[i]] <- temp_data
+        }
+        
+        data <- lapply(player_list, as.data.frame) %>%
+            bind_rows()
+        
+        data$club <- as.factor(data$club)
+        
+        (ggplot(data, aes_string(x = "club", y = input$covariable1, fill = "club")) +
+                geom_violin(trim = F) +
+                geom_boxplot(width = 0.1) +
+                theme(axis.text.x = element_text(angle = 90), legend.position = "none")) %>% 
+            ggplotly(.)
+    })
+    
 
 # Jugadores ---------------------------------------------------------------
 
@@ -139,6 +238,47 @@ shinyServer(function(input, output) {
         ) %>% ggplotly(.)]
         
     })
+    
+# Componentes principales
+    
+    cols_numeric = names(dt)[dt[, sapply(.SD, is.numeric)]]
+    sub_dt <- copy(dt[, .SD, .SDcols = cols_numeric])
+    sub_dt[, `:=`(value_million = value_million * 1000000,
+                  wage_million  = wage_million  * 1000000,
+                  release_clause_million = release_clause_million * 1000000)]
+    acp = dt[complete.cases(dt), prcomp(.SD, center = TRUE, scale = TRUE) %>% 
+                 summary(.), .SDcols = cols_numeric]
+    # Agregar biplot también
+    
+    output$pca <- renderPlotly({
+        acp %>% 
+            `[[`("rotation") %>% `^`(2) %>% `*`(100) %>% `[`(, 1:as.integer(input$n_acp)) %>% 
+            as.data.table(keep.rownames = "variables") %>% 
+            melt(data = ., id.vars = "variables", variable.name = "componentes", value.name = "ponderacion") %>% 
+            plot_ly(data = ., 
+                    y =~ variables, 
+                    x =~ componentes, 
+                    z =~ ponderacion,
+                    type = "heatmap") %>% 
+            layout(title = 'Ponderación de variables por componentes',
+                   xaxis = list(title = 'componentes'),
+                   yaxis = list(title = 'variables'))    
+    })
+    
+    output$tablePca <- DT::renderDataTable({
+        temp <- acp$importance %>% as.data.table(keep.rownames = "medidas")
+        # cols <-  names(temp %>% `[`(,1:3))[2:3]
+        cols <-  names(temp %>% `[`(,1:(1+as.integer(input$n_acp))))[2:(1+as.integer(input$n_acp))]
+        temp %>% `[`(,1:(1+as.integer(input$n_acp))) %>% 
+            DT::datatable(data = ., rownames = FALSE) %>% 
+            DT::formatRound(columns = cols, digits = 2)
+        # temp %>% `[`(,1:(1 + `input$n_acp`)) %>% 
+        #     DT::datatable(data = ., rownames = FALSE) %>% 
+        #     DT::formatRound(columns = cols, digits = 2)
+    })
+    
+
+# Modelo predictivo -------------------------------------------------------
     
     
     
